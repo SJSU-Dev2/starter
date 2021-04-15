@@ -1,0 +1,6 @@
+*.exe
+*.elf
+library/**/*
+!library/README.md
+tools/**/*
+!tools/README.md

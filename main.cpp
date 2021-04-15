@@ -1,4 +1,4 @@
-#include <libstm32f1xx/peripherals/gpio.hpp>
+#include <libstm32f10x/peripherals/gpio.hpp>
 #include <libcore/utility/time/time.hpp>
 
 int main()
