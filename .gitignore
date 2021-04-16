@@ -1,5 +1,6 @@
 *.exe
 *.elf
+*.o
 library/**/*
 !library/README.md
 tools/**/*

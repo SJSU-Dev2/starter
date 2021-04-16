@@ -7,7 +7,7 @@ else
   PLATFORM="$1"
 fi
 
-TOOLCHAIN="./tools/gcc-arm-none-eabi-nano-exceptions/gcc-arm-none-eabi-10-2021-q2-preview"
+TOOLCHAIN="./tools/gcc-arm-none-eabi-nano-exceptions/"
 
 ${TOOLCHAIN}/bin/arm-none-eabi-g++ \
   -T library/lib${PLATFORM}/lib${PLATFORM}/platform/default.ld \
@@ -20,4 +20,4 @@ ${TOOLCHAIN}/bin/arm-none-eabi-g++ \
   -Wl,--gc-sections --specs=rdimon.specs --specs=nano.specs \
   -std=c++20 -g -Og -I library/lib \
   main.cpp library/lib${PLATFORM}/lib${PLATFORM}/platform/startup.cpp \
-  -o main.elf
+  -o main-${PLATFORM}.elf
