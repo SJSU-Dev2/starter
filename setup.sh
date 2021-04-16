@@ -9,6 +9,7 @@ cd ./library/
 git clone https://github.com/SJSU-Dev2/libcore.git
 git clone https://github.com/SJSU-Dev2/libarmcortex.git
 git clone https://github.com/SJSU-Dev2/libstm32f10x.git
+git clone https://github.com/SJSU-Dev2/liblpc40xx.git
 
 rm -rf lib
 mkdir lib
@@ -16,6 +17,7 @@ mkdir lib
 link_library libcore
 link_library libarmcortex
 link_library libstm32f10x
+link_library liblpc40xx
 
 cd -
 
