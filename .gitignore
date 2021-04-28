@@ -1,7 +1,15 @@
 *.exe
 *.elf
 *.o
+*.bin
+*.lst
+**/.gdb_history
+
 library/**/*
 !library/README.md
-tools/**/*
-!tools/README.md
+
+packages/**/*
+!packages/README.md
+
+build/**/*
+!build/README.md

@@ -1,28 +1,21 @@
 #!/bin/bash
 
-function link_library() {
-  ln -s $(pwd)/$1/$1 lib/$1
-}
+git clone -b main \
+  https://github.com/SJSU-Dev2/libcore.git packages/
 
-cd ./library/
+git clone -b main \
+  https://github.com/SJSU-Dev2/libarmcortex.git packages/
 
-git clone https://github.com/SJSU-Dev2/libcore.git
-git clone https://github.com/SJSU-Dev2/libarmcortex.git
-git clone https://github.com/SJSU-Dev2/libstm32f10x.git
-git clone https://github.com/SJSU-Dev2/liblpc40xx.git
+git clone -b main \
+  https://github.com/SJSU-Dev2/libstm32f10x.git packages/
 
-rm -rf lib
-mkdir lib
+git clone -b main \
+  https://github.com/SJSU-Dev2/liblpc40xx.git packages/
 
-link_library libcore
-link_library libarmcortex
-link_library libstm32f10x
-link_library liblpc40xx
+git clone -b main \
+  https://github.com/SJSU-Dev2/gcc-arm-none-eabi-nano-exceptions.git packages/
 
-cd -
+git clone -b "gcc10-2021-q2-preview" \
+  https://github.com/SJSU-Dev2/gcc-arm-none-eabi-nano-exceptions.git packages/
 
-cd tools/
-
-git clone https://github.com/SJSU-Dev2/gcc-arm-none-eabi-nano-exceptions.git
-cd gcc-arm-none-eabi-nano-exceptions/
-git checkout gcc10-2021-q2-preview
+./link_libraries.sh
