@@ -1,11 +1,26 @@
 #!/bin/bash
 
+
+function check_mark() {
+  if [[ $? -eq "0" ]] ; then
+    printf "${CHECK_MARK}\n" # check mark
+  else
+    printf "${BALLOT_X}\n\n" # ballot cross
+    cat ${ARTIFACTS_COMMON_NAME}.log
+    echo ""
+    exit 1
+  fi
+}
+
 # If the first argument is empty default to stm32f10x
 if [[ -z "$1" ]]; then
   PLATFORM="stm32f10x"
 else
   PLATFORM="$1"
 fi
+
+CHECK_MARK="\e[32m\xE2\x9C\x94\e[0m"
+BALLOT_X="\e[31m\xE2\x9C\x97\e[0m"
 
 TOOLCHAIN="./packages/gcc-arm-none-eabi-nano-exceptions/"
 BUILD_DIRECTORY="build"
@@ -30,40 +45,33 @@ ${TOOLCHAIN}/bin/arm-none-eabi-g++ \
   main.cpp library/lib${PLATFORM}/platform/startup.cpp \
   -o ${ARTIFACTS_COMMON_NAME}.elf &> ${ARTIFACTS_COMMON_NAME}.log
 
-BUILD_SUCCEEDED=$?
 
-if [[ ${BUILD_SUCCEEDED} -eq "0" ]] ; then
-  printf "\xE2\x9C\x94\n"
-else
-  echo ""
-  cat ${ARTIFACTS_COMMON_NAME}.log
-  exit 1
-fi
+check_mark $?
 
 printf "Generating: .bin  (binary) "
 ${TOOLCHAIN}/bin/arm-none-eabi-objcopy -O binary \
   ${ARTIFACTS_COMMON_NAME}.elf \
   ${ARTIFACTS_COMMON_NAME}.bin
-printf "\xE2\x9C\x94\n"
+check_mark $?
 
 printf "            .hex  (intel HEX file) "
 ${TOOLCHAIN}/bin/arm-none-eabi-objcopy -O ihex \
   ${ARTIFACTS_COMMON_NAME}.elf \
   ${ARTIFACTS_COMMON_NAME}.hex
-printf "\xE2\x9C\x94\n"
+check_mark $?
 
 printf "            .S    (disassembly) "
 ${TOOLCHAIN}/bin/arm-none-eabi-objdump --disassemble --demangle \
   ${ARTIFACTS_COMMON_NAME}.elf > ${ARTIFACTS_COMMON_NAME}.S
-printf "\xE2\x9C\x94\n"
+check_mark $?
 
 printf "            .lst  (disassembly with source code) "
 ${TOOLCHAIN}/bin/arm-none-eabi-objdump \
   --all-headers --source --disassemble --demangle \
   ${ARTIFACTS_COMMON_NAME}.elf > ${ARTIFACTS_COMMON_NAME}.lst
-printf "\xE2\x9C\x94\n"
+check_mark $?
 
 printf "            .size (size information) "
 ${TOOLCHAIN}/bin/arm-none-eabi-size \
   ${ARTIFACTS_COMMON_NAME}.elf > ${ARTIFACTS_COMMON_NAME}.siz
-printf "\xE2\x9C\x94\n"
+check_mark $?
