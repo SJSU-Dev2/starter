@@ -12,12 +12,28 @@ function check_mark() {
   fi
 }
 
-# If the first argument is empty default to stm32f10x
-if [[ -z "$1" ]]; then
-  PLATFORM="stm32f10x"
-else
-  PLATFORM="$1"
-fi
+function usage() {
+  echo "Usage: $0 [-p <stm32f10x|lpc40xx>] [-f <file.cpp>]" 1>&2; exit 1;
+}
+
+# Default behavior
+PLATFORM="stm32f10x"
+SOURCE_FILE="main.cpp"
+
+while getopts ":p:f:" o; do
+    case "${o}" in
+        p)
+            PLATFORM=${OPTARG}
+            ;;
+        f)
+            SOURCE_FILE=${OPTARG}
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
 
 CHECK_MARK="\e[32m\xE2\x9C\x94\e[0m"
 BALLOT_X="\e[31m\xE2\x9C\x97\e[0m"
@@ -26,7 +42,7 @@ TOOLCHAIN="./packages/gcc-arm-none-eabi-nano-exceptions/"
 BUILD_DIRECTORY="build"
 PLATFORM_GCC_ARGS=$(cat library/lib${PLATFORM}/platform/gcc.txt)
 ARTIFACTS_DIRECTORY="${BUILD_DIRECTORY}/${PLATFORM}"
-ARTIFACTS_COMMON_NAME="${ARTIFACTS_DIRECTORY}/main-${PLATFORM}"
+ARTIFACTS_COMMON_NAME="${ARTIFACTS_DIRECTORY}/${PLATFORM}.${SOURCE_FILE}"
 
 mkdir -p ${ARTIFACTS_DIRECTORY}/
 
@@ -36,14 +52,16 @@ ${TOOLCHAIN}/bin/arm-none-eabi-g++ \
   -fno-threadsafe-statics -fno-omit-frame-pointer -fdiagnostics-color \
   -Wno-main -Wall -Wextra -Wformat=2 -Wno-uninitialized -Wnull-dereference \
   -Wold-style-cast -Woverloaded-virtual -Wsuggest-override \
-  -Wl,--gc-sections --specs=rdimon.specs --specs=nano.specs \
+  -Wl,--gc-sections -Wl,--print-memory-usage \
+  --specs=rdimon.specs --specs=nano.specs \
   -fcompare-debug-second \
-  -std=c++20 -g -Og -I library/ \
+  -std=c++20 -g -Os -I library/ \
   ${PLATFORM_GCC_ARGS} \
   -D PLATFORM=${PLATFORM} \
   -T library/lib${PLATFORM}/platform/default.ld \
-  main.cpp library/lib${PLATFORM}/platform/startup.cpp \
-  -o ${ARTIFACTS_COMMON_NAME}.elf &> ${ARTIFACTS_COMMON_NAME}.log
+  ${SOURCE_FILE} library/lib${PLATFORM}/platform/startup.cpp \
+  -o ${ARTIFACTS_COMMON_NAME}.elf \
+  1> ${ARTIFACTS_COMMON_NAME}.size.percent 2> ${ARTIFACTS_COMMON_NAME}.log
 
 
 check_mark $?
@@ -73,5 +91,11 @@ check_mark $?
 
 printf "            .size (size information) "
 ${TOOLCHAIN}/bin/arm-none-eabi-size \
-  ${ARTIFACTS_COMMON_NAME}.elf > ${ARTIFACTS_COMMON_NAME}.siz
+  ${ARTIFACTS_COMMON_NAME}.elf > ${ARTIFACTS_COMMON_NAME}.size
 check_mark $?
+
+echo
+echo 'Section Memory Usage'
+cat ${ARTIFACTS_COMMON_NAME}.size
+echo
+cat ${ARTIFACTS_COMMON_NAME}.size.percent

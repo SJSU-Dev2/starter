@@ -1,4 +1,5 @@
 #include <libcore/utility/build_info.hpp>
+#include <libcore/utility/log.hpp>
 #include <libcore/utility/time/time.hpp>
 #include <liblpc40xx/peripherals/gpio.hpp>
 #include <libstm32f10x/peripherals/gpio.hpp>
@@ -17,7 +18,8 @@ int main()
   }
   else
   {
-    printf("Unsupported platform!\n");
+    sjsu::log::Print("Unsupported platform %d!\n", 41);
+    sjsu::log::Print("Unsupported platform {}!\n", 42);
     return -1;
   }
 
