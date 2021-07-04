@@ -4,16 +4,20 @@
 #include <libcore/utility/time/time.hpp>
 #include <liblpc40xx/peripherals/gpio.hpp>
 #include <liblpc40xx/peripherals/uart.hpp>
+#include <libcore/platform/startup.hpp>
 #include <libstm32f10x/peripherals/gpio.hpp>
+
+sjsu::Uart & uart0 = sjsu::lpc40xx::GetUart<0>();
 
 void TestExceptions()
 {
+  sjsu::log::Print("Go!\n");
+
+  uart0.Write("GO!\n");
   throw 5;
 }
 
 sjsu::StaticNewlib<4> newlib;
-
-sjsu::Uart & uart0 = sjsu::lpc40xx::GetUart<0>();
 
 int log_storage(int, const char * buffer, int length)
 {
@@ -22,8 +26,21 @@ int log_storage(int, const char * buffer, int length)
   return length;
 }
 
+struct _reent r = { 0, nullptr, reinterpret_cast<FILE *>(1), nullptr };
+struct _reent * _impure_ptr = &r;
+
+extern "C" void __cxa_pure_virtual()
+{
+  // put your error handling here
+}
+
+extern "C" void __cxa_atexit() {
+  // uart0.Write("__cxa_atexit!\n");
+}
+
 int main()
 {
+  sjsu::InitializePlatform();
   sjsu::Gpio * led = &sjsu::GetInactive<sjsu::Gpio>();
 
   // Set UART0 baudrate, which is required for printf and scanf to work properly
@@ -48,6 +65,8 @@ int main()
     return -1;
   }
 
+  uart0.Write("Hello World!\n");
+
   sjsu::log::Print("Hello World!! {}\n", 42.5f);
 
   led->Initialize();
@@ -67,6 +86,7 @@ int main()
     counter++;
 
     sjsu::log::Print("Counter = {}!\n", counter);
+    uart0.Write("COUNTER!\n");
 
     if (counter == 3)
     {
@@ -77,6 +97,7 @@ int main()
       }
       catch (...)
       {
+        uart0.Write("Exception!\n");
         sjsu::log::Print("Exception!\n");
       }
       delay_time = 200ms;
