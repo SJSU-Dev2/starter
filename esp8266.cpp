@@ -1,6 +1,6 @@
 #include <cinttypes>
 #include <cstdint>
-#include <libcore/platform/newlib.hpp>
+#include <libcore/platform/syscall.hpp>
 #include <libcore/utility/build_info.hpp>
 #include <libcore/utility/debug.hpp>
 #include <libcore/utility/log.hpp>
@@ -30,7 +30,7 @@ int log_storage(int, const char * buffer, int length)
 int main()
 {
   newlib.AddWriter(log_storage);
-  sjsu::NewlibManager::Set(&newlib);
+  sjsu::SysCallManager::Set(&newlib);
 
   sjsu::log::Print("ESP8266 Application Starting...");
 
