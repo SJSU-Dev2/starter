@@ -19,25 +19,15 @@ std::string_view get_request_example =
 char log_buffer[1024 * 5];
 int position = 0;
 
-sjsu::StaticNewlib<4> newlib;
-
-int log_storage(int, const char * buffer, int length)
-{
-  strncpy(&log_buffer[position], buffer, sizeof(log_buffer) - position);
-  position += length;
-}
-
 int main()
 {
-  newlib.AddWriter(log_storage);
-  sjsu::SysCallManager::Set(&newlib);
-
   sjsu::log::Print("ESP8266 Application Starting...");
 
   // Phase #1:
   // Define all of the peripheral you plan to use as pointers. Pointers must be
   // used in order to do the next step
   sjsu::Uart * uart = &sjsu::GetInactive<sjsu::Uart>();
+  sjsu::Uart * serial_port = &sjsu::GetInactive<sjsu::Uart>();
 
   // Phase #2:
   // Use "constexpr if" to instantiate the peripherals for each platform
@@ -51,6 +41,7 @@ int main()
   {
     sjsu::log::Print("Current Platform LPC40xx...");
     uart = &sjsu::lpc40xx::GetUart<3>();
+    serial_port = &sjsu::lpc40xx::GetUart<0>();
   }
   else
   {
@@ -58,14 +49,17 @@ int main()
     return -1;
   }
 
-  sjsu::Esp8266 esp(*uart);
+  serial_port->settings.baud_rate = 115200;
+  serial_port->Initialize();
+  sjsu::SysCallManager::Get().AddSerial(*serial_port);
 
-  auto & socket = esp.GetInternetSocket();
-  auto & wifi   = esp.GetWiFi();
+  sjsu::Esp8266 esp(*uart);
 
   // NOTE: there is no need to initialize wifi or socket as they both simply
   // initialize and enable the ESP module.
   sjsu::log::Print("Initializing Esp8266 module...");
+  auto & socket = esp.GetInternetSocket();
+  auto & wifi   = esp.GetWiFi();
   esp.Initialize();
 
   while (true)

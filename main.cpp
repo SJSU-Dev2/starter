@@ -1,60 +1,38 @@
+#include <cstdio>
 #include <libcore/platform/syscall.hpp>
 #include <libcore/utility/build_info.hpp>
 #include <libcore/utility/log.hpp>
 #include <libcore/utility/time/time.hpp>
-
 #include <liblpc40xx/peripherals/gpio.hpp>
 #include <liblpc40xx/peripherals/uart.hpp>
 #include <liblpc40xx/platform/startup.hpp>
 
-#include <libstm32f10x/peripherals/gpio.hpp>
-#include <libstm32f10x/peripherals/uart.hpp>
-#include <libstm32f10x/platform/startup.hpp>
-
-void TestExceptions()
-{
-  sjsu::log::Print("Go!\n");
-  throw 5;
-}
+sjsu::Uart & serial_port = sjsu::lpc40xx::GetUart<0>();
 
 int main()
 {
-  sjsu::Gpio * led_ptr         = &sjsu::GetInactive<sjsu::Gpio>();
-  sjsu::Uart * serial_port_ptr = &sjsu::GetInactive<sjsu::Uart>();
+  // Step 1. Initialize clocks, peripheral power, and system timers.
+  sjsu::lpc40xx::InitializePlatform();
 
-  if constexpr (sjsu::build::IsPlatform("lpc40xx"))
-  {
-    sjsu::lpc40xx::InitializePlatform();
-    led_ptr         = &sjsu::lpc40xx::GetGpio<2, 3>();
-    serial_port_ptr = &sjsu::lpc40xx::GetUart<0>();
-  }
-  else if constexpr (sjsu::build::IsPlatform("stm32f10x"))
-  {
-    sjsu::stm32f10x::InitializePlatform();
-    led_ptr         = &sjsu::stm32f10x::GetGpio<'A', 1>();
-    serial_port_ptr = &sjsu::stm32f10x::GetUart<1, 32>();
-  }
-  else
-  {
-    return -1;
-  }
+  // Step 2. Create the peripherals needed for the project.
+  sjsu::Gpio & led = sjsu::lpc40xx::GetGpio<2, 3>();
 
-  auto & led = *led_ptr;
-  auto & serial_port = *serial_port_ptr;
-
-  led.Initialize();
-  led.SetAsOutput();
-
-  // Set UART0 baudrate, which is required for printf and scanf to work properly
+  // Step 3. Configure and initialize peripherals
   serial_port.settings.baud_rate = 115200;
   serial_port.Initialize();
+  led.Initialize();
 
+  // Step 4. Use peripherals
+  led.SetAsOutput();
+
+  // Step 5. (OPTIONAL) Add a serial port to the newlib manager in order to show
   sjsu::SysCallManager::Get().AddSerial(serial_port);
 
-  int counter     = 0;
-  auto delay_time = 1000ms;
-
+  // Step 6. Start Application
   sjsu::log::Print("Starting Application...\n");
+
+  int counter     = 0;
+  auto delay_time = 500ms;
 
   while (1)
   {
@@ -67,20 +45,6 @@ int main()
     counter++;
 
     sjsu::log::Print("Counter = {}!\n", counter);
-
-    if (counter == 3)
-    {
-      sjsu::log::Print("Starting exceptions!\n");
-      try
-      {
-        TestExceptions();
-      }
-      catch (...)
-      {
-        sjsu::log::Print("Exception!\n");
-        delay_time = 200ms;
-      }
-    }
   }
 
   return 0;
